@@ -4,18 +4,17 @@ import random
 
 # DEFINITIONS:
 # locations
-locationPlayerHand = 0
-locationPlayerSide = 1
-locationOpponentSide = -1
+LOCATIONPLAYERHAND = 0
+LOCATIONPLAYERSIDE = 1
+LOCATIONOPPONENTSIDE = -1
 
-def errorSide(text):
-    print(text, file=sys.stderr)
+# def writeError(text):
+#    print(text, file=sys.stderr)
 
-# Behaviour: 
-#TargetCurve  0,1,2,3,4,5,6,7+
-targetCurve = [0,2,8,6,4,2,2,3]
-targetRemovalNum = 3
-
+# Behaviour:
+# TARGETCURVE  0,1,2,3,4,5,6,7+
+TARGETCURVE = [0, 2, 8, 6, 4, 2, 2, 3]
+TARGETREMOVALNUMBER = 3
 
 
 class Side(object):
@@ -32,31 +31,26 @@ class Side(object):
         return sum
 
     def refreshSide(self):
-        list = []
-        for creature in self.creatures:
-            if creature.canAttack and creature.defense > 0:
-                list.append(creature)
-        self.creatures = list
+        self.creatures = [
+            creature for creature in self.creatures if creature.canAttack and creature.defense > 0]
         self.guards = self.listGuards()
         self.sumAttack = self.calcSumAttack()
 
     def listGuards(self):
-        guards = []
-        for creature in self.creatures:
-            if 'G' in creature.abilities:
-                guards.append(creature)
+        guards = [
+            creature for creature in self.creatures if 'G' in creature.abilities]
         guards.sort(key=lambda x: x.defenseValue, reverse=True)
         return guards
 
     def addCreature(self, creature):
         self.creatures.append(creature)
         self.refreshSide()
-        self.sumAttack = self.calcSumAttack()
+
 
 class Card:
 
-    currentCurve = targetCurve
-    currentNumberOfRemovals = targetRemovalNum
+    currentCurve = TARGETCURVE
+    currentNumberOfRemovals = TARGETREMOVALNUMBER
 
     def __init__(self, card_number, instance_id, location, card_type, cost, attack, defense, abilities, my_health_change, opponent_health_change, card_draw):
         self.card_number = int(card_number)
@@ -82,8 +76,10 @@ class Card:
             self.relativeDefense = self.defense * 2
 
         # Positive
-        self.attackValue = (self.relativeAttack / self.cost) if cost is not "0" else (self.relativeAttack + 1)
-        self.defenseValue = (self.relativeDefense / self.cost) if cost is not "0" else (self.relativeDefense + 1)
+        self.attackValue = (
+            self.relativeAttack / self.cost) if cost is not "0" else (self.relativeAttack + 1)
+        self.defenseValue = (
+            self.relativeDefense / self.cost) if cost is not "0" else (self.relativeDefense + 1)
         self.costEfficiency = (self.attackValue + self.defenseValue) * 2
 
         # Low hp tax
@@ -92,14 +88,13 @@ class Card:
         # manacurve
         self.onCurve = 0
         # 0-6
-        if self.cost < 7:   
-            if self.currentCurve[self.cost] <= 0:  
+        if self.cost < 7:
+            if Card.currentCurve[self.cost] <= 0:
                 self.onCurve = -5
         # 7-12
         else:
-            if self.currentCurve[7] <= 0:  
+            if Card.currentCurve[7] <= 0:
                 self.onCurve = -5
-
 
         # Types
         if self.card_type is 0:  # Creatures
@@ -122,16 +117,18 @@ class Card:
                 self.value += self.relativeAttack
             else:
                 self.value = -5
-        elif self.card_type is 2: # Red
-            if self.currentNumberOfRemovals > 0: 
-                if self.card_number == 151: # Decimate (Destroy any creature for 5):
+        elif self.card_type is 2:  # Red
+            if self.currentNumberOfRemovals > 0:
+                # Decimate (Destroy any creature for 5):
+                if self.card_number == 151:
                     self.value = 10
-                elif self.card_number == 148: # Helm Crusher (Remove everything, 2 damage, for 2):
+                # Helm Crusher (Remove everything, 2 damage, for 2):
+                elif self.card_number == 148:
                     self.value = 10
                 else:
                     self.value = 4
             else:
-               self.value = 4 + currentNumberOfRemovals
+               self.value = 4 + self.currentNumberOfRemovals
 
         else:  # self.card_type is 3 # Blue
             self.value -= 5  # TODO items
@@ -140,7 +137,6 @@ class Card:
 
         self.value += self.onCurve
 
-        
 
 def fight_part(attacker, defender):
     if 'W' in defender.abilities:
@@ -166,12 +162,14 @@ def fight(one, two):
     fight_part(one, two)
     fight_part(two, one)
 
+
 def tryGoodTrade(target, attackers):
     possibleTrades = []
     for attacker in attackers:
         if not fight_test(target, attacker) and attacker.canAttack and fight_test(attacker, target):
             possibleTrades.append(attacker)
     return possibleTrades
+
 
 def tryPerfectTrade(target, attackers):
     possibleTrades = []
@@ -195,6 +193,7 @@ def tryAcceptableUpTrade(target, attackers):
         if attacker.canAttack and fight_test(attacker, target) and attacker.cost < target.cost:
             possibleTrades.append(attacker)
     return possibleTrades
+
 
 def useItemOnCreature(item, creature):
     if item.card_type is 1 or 2:
@@ -242,11 +241,11 @@ while True:
         newCard = Card(card_number, instance_id, location, card_type, cost, attack,
                        defense, abilities, my_health_change, opponent_health_change, card_draw)
 
-        if (newCard.location == locationPlayerHand) and (turn >= 30):
+        if (newCard.location == LOCATIONPLAYERHAND) and (turn >= 30):
             playerHand.append(newCard)
-        elif newCard.location == locationPlayerSide:
+        elif newCard.location == LOCATIONPLAYERSIDE:
             playerSide.addCreature(newCard)
-        elif newCard.location == locationOpponentSide:
+        elif newCard.location == LOCATIONOPPONENTSIDE:
             opponentSide.addCreature(newCard)
         else:
             draftSelection.append(newCard)
@@ -256,10 +255,11 @@ while True:
         for i in range(len(draftSelection)):
 
             valuesay += str("%.2f" % draftSelection[i].value) + ":"
-            #valuesay += str("%.2f" % draftSelection[i].onCurve ) + " "
-            #valuesay += str(draftSelection[0].curveBarriernumbers)
+            # valuesay += str("%.2f" % draftSelection[i].onCurve ) + " "
+            # valuesay += str(draftSelection[0].curveBarriernumbers)
 
             selected = max(draftSelection, key=lambda c: c.value)
+ 
         if draftSelection[0] == selected:
             print("PICK 0 " + valuesay)
         elif draftSelection[1] == selected:
@@ -269,7 +269,7 @@ while True:
         
         # Curve
         if selected.cost < 7:
-            selected.currentCurve[selected.cost] -= 1             
+            Card.currentCurve[selected.cost] -= 1             
         else: 
             selected.currentCurve[7] -= 1
         if selected.card_type == 2:
@@ -402,7 +402,6 @@ while True:
         playerSide.refreshSide()
         opponentSide.refreshSide()
         
-        errorSide(str(playerSide.sumAttack) + "-" + str(opponent_health))
         if playerSide.sumAttack >= opponent_health:  # Lethal. Let's win
             for creature in playerSide.creatures:
                 attackOrders += "ATTACK " + \
