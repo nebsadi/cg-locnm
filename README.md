@@ -1,2 +1,2 @@
 # cg-locnm
-Legends_of_Code_and_Magic
+Bot written for the Legends of Code and Magic Marahon on Codingame
